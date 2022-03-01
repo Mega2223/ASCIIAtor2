@@ -4,6 +4,8 @@ import net.Mega2223.utils.GenericTools;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -18,7 +20,13 @@ import java.util.List;
 
 public class Workspace extends JFrame {
 
+    int CadenciaDeRefreshes = 50;
+    String[] values = ASCIIConverter.VALUES.clone();
+    int[] tolerances = ASCIIConverter.TOLERANCES.clone();
+    boolean doRenderUpdates = true;
+
     JLabel lastAction = new JLabel("");
+    JLabel preview = new JLabel("");
     JLabel percentage = new JLabel("");
 
     BufferedImage selectedFile = null;
@@ -30,8 +38,8 @@ public class Workspace extends JFrame {
     JFileChooser chooser = null;
     JMenuItem ctrlV = new JMenuItem("Pegar imagem da sua área de transferência");
     JMenu ASCII = new JMenu("ASCII");
-    JMenuItem renderizar = new JMenuItem("Renderizar ASCII");
-
+    JMenuItem renderizar = new JMenuItem("Renderização Rápida");
+    JMenuItem ASCIIConfig = new JMenuItem("Renderização Completa");
     final ASCIIConverter converter = new ASCIIConverter();
 
     public Workspace() {
@@ -40,6 +48,8 @@ public class Workspace extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         add(lastAction);
         lastAction.setFont(Font.decode("Consolas"));
+        add(preview);
+        preview.setFont(Font.decode("Consolas"));
         add(percentage);
         percentage.setFont(Font.decode("Consolas"));
 
@@ -75,36 +85,38 @@ public class Workspace extends JFrame {
             }
         });
         renderizar.addActionListener(e -> {
-            final double total = selectedFile.getHeight()*selectedFile.getWidth();
+            final double total = selectedFile.getHeight()*selectedFile.getWidth() + selectedFile.getHeight();
             converter.addRunnable(() -> {
-                System.out.println("eventRun");
+                if(converter.getItnerations() % CadenciaDeRefreshes != 0){return;}
+                System.out.println(converter.getString());
+                refreshLabel(converter.getString());
 
+            });
+            converter.addRunnable(() -> {
+                if(converter.getItnerations() % CadenciaDeRefreshes != 0){return;}
                 double doble = ((double) converter.getItnerations()) / total;
                 System.out.println(converter.getItnerations()+ ":" + total + "=" + doble);
-                percentage.setText("Progresso: " + (int)(100* doble) + "%");
-
-                String converterString = converter.getString();
-                String[] splitted = converterString.split("\n");
-                double fontMultiplier = 0.1 / splitted[0].length();
-                int fontSize = (int) (5000 * fontMultiplier);
-                fontSize++;
-                lastAction.setFont(new Font(lastAction.getFont().getName(), Font.PLAIN, fontSize));
-                lastAction.setSize(100,100);
-                lastAction.setText(GenericTools.ConvertToHTML(splitted));
-
-                //retarda o programa propositalmente
-                //TODO: remove isso, duh
-                //quickSleep(100);
+                percentage.setText("Progresso: " + (int)((100* doble)) + "%");
             });
-            renderedImage = converter.convert(selectedFile);
+            converter.convert(selectedFile);
 
-            System.out.println(renderedImage);
+            String convert = converter.getString();
+            renderedImage = convert;
+            System.out.println(convert);
+            refreshLabel(convert);
+
         });
-
+        ASCIIConfig.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ConfigWindow configWindow = new ConfigWindow();
+            }
+        });
         abrir.add(arquivo);
         abrir.add(ctrlV);
 
         ASCII.add(renderizar);
+        ASCII.add(ASCIIConfig);
 
         bar.add(abrir);
         bar.add(ASCII);
@@ -112,6 +124,17 @@ public class Workspace extends JFrame {
         setJMenuBar(bar);
 
         setVisible(true);
+    }
+
+    private void refreshLabel(String converterString) {
+        if(converterString == null){return;}
+        String[] splitted = converterString.split("\n");
+        double fontMultiplier = 0.1 / splitted[0].length();
+        int fontSize = (int) (5000 * fontMultiplier);
+        fontSize++;
+        preview.setFont(new Font(lastAction.getFont().getName(), Font.PLAIN, fontSize));
+        preview.setSize(100,100);
+        preview.setText(GenericTools.ConvertToHTML(splitted));
     }
 
 
@@ -135,5 +158,143 @@ public class Workspace extends JFrame {
             e.printStackTrace();
         }
         return null;
+    }
+
+    //não, essa classe não é estática
+    //loucura loucura loucura
+    public class ConfigWindow extends JFrame{
+
+        JSlider cadencia = new JSlider();
+        JLabel cadenciaLabel = new JLabel("50");
+
+        JLabel toleranciaLabel[] = {new JLabel(tolerances[0]+""),new JLabel(tolerances[1]+""),new JLabel(tolerances[2]+""),new JLabel(tolerances[3]+""),new JLabel(tolerances[4]+"")};
+
+        static final String tol = "Tolerância ";
+        JSlider tolerancias[] = {
+                 new JSlider(0,255, ASCIIConverter.TOLERANCES[0])
+                ,new JSlider(0,255,ASCIIConverter.TOLERANCES[1])
+                ,new JSlider(0,255,ASCIIConverter.TOLERANCES[2])
+                ,new JSlider(0,255,ASCIIConverter.TOLERANCES[3])
+                ,new JSlider(0,255,ASCIIConverter.TOLERANCES[4])};
+        //TALVEZ eu possa colocar essas declarações num loop de itnerações, mas eu prefiro não arriscar
+        JTextField[] valueSetter = {new JTextField(values[0]),new JTextField(values[1]),new JTextField(values[2]),new JTextField(values[3]),new JTextField(values[4])};
+
+        JTextField dimX = new JTextField("20");
+        JTextField dimY = new JTextField("20");
+        JButton ogDim = new JButton("Usar dimenções da Imagem");
+
+        JButton renderizar = new JButton("Renderizar");
+
+        JCheckBox darkMode = new JCheckBox();
+        JCheckBox upDates = new JCheckBox();
+
+        public ConfigWindow(){
+            setSize(223,600);
+            setVisible(true);
+            setLayout(new FlowLayout());
+            setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+            cadencia.addChangeListener(e -> {
+                CadenciaDeRefreshes = cadencia.getValue();
+                cadenciaLabel.setText(CadenciaDeRefreshes + "");
+            });
+
+            add(new JLabel("Cadência de refreshes:"));
+            add(cadenciaLabel);
+            add(cadencia);
+
+            for (int i = 0; i < tolerancias.length; i++) {
+                JSlider ac = tolerancias[i];
+                final int finalI = i;
+                ac.addChangeListener(e -> {
+                    tolerances[finalI] = ac.getValue();
+                    toleranciaLabel[finalI].setText(tolerances[finalI] + "");
+                });
+                add(new JLabel("Tolerância de " + values[finalI] + ":"));
+                add(toleranciaLabel[i]);
+                add(ac);
+            }
+
+            for (int i = 0; i < values.length; i++) {
+                JTextField act = valueSetter[i];
+                add(new JLabel(i+"º Valor:"));
+                int finalI = i;
+                act.addActionListener(e -> {
+                    values[finalI] = act.getText();
+                });
+                add(act);
+            }
+
+            add(new JLabel("Dimensões X e Y respectivamente:"));
+            Dimension minimumSize = new Dimension(100, 40);
+            dimX.setMinimumSize(minimumSize);
+            dimY.setMinimumSize(minimumSize);
+            add(dimX);add(dimY);
+
+            add(new JLabel("Dark mode?"));
+            add(darkMode);
+
+            add(new JLabel("Fazer updates de texto?"));
+            add(upDates);
+
+            ogDim.addActionListener(e -> {
+                dimX.setText(selectedFile.getWidth()+"");
+                dimY.setText(selectedFile.getHeight()+"");
+            });
+            add(ogDim);
+
+            renderizar.addActionListener(e -> {
+
+                Dimension dim;
+                try {
+                    dim = new Dimension(Integer.parseInt(dimX.getText()), Integer.parseInt(dimY.getText()));
+                } catch (NumberFormatException exception) {
+                    renderizar.setText("Dimenções não são números :(");
+                    return;
+                }
+                System.out.println(dim);
+                final double tot = dim.getHeight() * dim.getWidth() + dim.getHeight();
+                System.out.println("DECLARAÇÃO DE TOTAL: " + tot + "(" + dim.getHeight() + "*" + dim.getWidth() + "+" + dim.getHeight() + ")");
+
+                //atualiza a label
+                converter.addRunnable(() -> {
+                    if (converter.getItnerations() % CadenciaDeRefreshes != 0 || !upDates.isSelected()) {
+                        return;
+                    }
+                    refreshLabel(converter.getString());
+
+                });
+                //atualiza as porcentagens
+                converter.addRunnable(() -> {
+
+                    System.out.println("TOTAL: " + tot + "(" + dim.getHeight() + "*" + dim.getWidth() + "+" + dim.getHeight() + ")");
+                    System.out.println("T:" + tot + ":" + converter.getItnerations());
+
+                    if (converter.getItnerations() % CadenciaDeRefreshes != 0) {
+                        return;
+                    }
+                    double doble = ((double) converter.getItnerations()) / tot;
+                    percentage.setText("Progresso: " + (int) ((100 * doble)) + "%");
+                });
+                //atualiza a label no final
+                converter.addRunnable(() -> {
+                    if (!converter.isComplete()) {
+                        return;
+                    }
+                    double doble = ((double) converter.getItnerations()) / tot;
+                    percentage.setText("Progresso: " + (int) ((100 * doble)) + "%");
+                    refreshLabel(converter.getString());
+                    System.out.println(converter.getString());
+                });
+
+
+                //fixme alpha
+                converter.convert(selectedFile, dim, false, darkMode.isSelected(), tolerances, values,true);
+
+                refreshLabel(converter.getString());
+            });
+
+            add(renderizar);
+        }
     }
 }
