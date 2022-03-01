@@ -1,18 +1,14 @@
 package net.Mega2223.ASCIIAtor2.objects;
 
 import net.Mega2223.utils.GenericTools;
+import net.Mega2223.utils.ImageTools;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageTranscoder;
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.datatransfer.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -20,6 +16,7 @@ import java.util.List;
 
 public class Workspace extends JFrame {
 
+    public static final String USER_DIR = System.getProperty("user.dir");
     int CadenciaDeRefreshes = 50;
     String[] values = ASCIIConverter.VALUES.clone();
     int[] tolerances = ASCIIConverter.TOLERANCES.clone();
@@ -36,16 +33,22 @@ public class Workspace extends JFrame {
     JMenu abrir = new JMenu("Abrir");
     JMenuItem arquivo = new JMenuItem("De arquivo");
     JFileChooser chooser = null;
-    JMenuItem ctrlV = new JMenuItem("Pegar imagem da sua área de transferência");
+    JMenuItem CtrlV = new JMenuItem("Pegar imagem da sua área de transferência");
     JMenu ASCII = new JMenu("ASCII");
     JMenuItem renderizar = new JMenuItem("Renderização Rápida");
     JMenuItem ASCIIConfig = new JMenuItem("Renderização Completa");
+    JMenu salvar = new JMenu("Salvar");
+    JMenuItem CtrlC = new JMenuItem("Colocar sua String na área de transferência");
+    JMenuItem textSave = new JMenuItem("Salvar como .txt");
     final ASCIIConverter converter = new ASCIIConverter();
 
-    public Workspace() {
+    public Workspace() throws IOException {
         setLayout(new FlowLayout());
         setSize(300, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        setIconImage(ImageTools.getImageByURL("https://avatars.githubusercontent.com/u/59067466?s=400&u=9d154cbed85befb100018e3c9e4708875b51b141&v=4"));
+
         add(lastAction);
         lastAction.setFont(Font.decode("Consolas"));
         add(preview);
@@ -70,7 +73,7 @@ public class Workspace extends JFrame {
 
             }
         });
-        ctrlV.addActionListener(e -> {
+        CtrlV.addActionListener(e -> {
             try {
                 selectedFile = loadImageFromClipboard();
                 if (selectedFile != null) {
@@ -106,20 +109,29 @@ public class Workspace extends JFrame {
             refreshLabel(convert);
 
         });
-        ASCIIConfig.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ConfigWindow configWindow = new ConfigWindow();
-            }
+        ASCIIConfig.addActionListener(e -> {
+            ConfigWindow configWindow = new ConfigWindow();
         });
+        CtrlC.addActionListener(e -> {
+            Clipboard systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+
+            StringSelection selection = new StringSelection(renderedImage);
+            systemClipboard.setContents(selection, null);
+
+        });
+
         abrir.add(arquivo);
-        abrir.add(ctrlV);
+        abrir.add(CtrlV);
 
         ASCII.add(renderizar);
         ASCII.add(ASCIIConfig);
 
+        salvar.add(CtrlC);
+        salvar.add(textSave);
+        
         bar.add(abrir);
         bar.add(ASCII);
+        bar.add(salvar);
 
         setJMenuBar(bar);
 
@@ -285,6 +297,7 @@ public class Workspace extends JFrame {
                     percentage.setText("Progresso: " + (int) ((100 * doble)) + "%");
                     refreshLabel(converter.getString());
                     System.out.println(converter.getString());
+                    renderedImage = converter.getString();
                 });
 
 
