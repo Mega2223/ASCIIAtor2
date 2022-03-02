@@ -9,8 +9,12 @@ import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.datatransfer.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 
@@ -110,6 +114,7 @@ public class Workspace extends JFrame {
 
         });
         ASCIIConfig.addActionListener(e -> {
+            @SuppressWarnings("unused")
             ConfigWindow configWindow = new ConfigWindow();
         });
         CtrlC.addActionListener(e -> {
@@ -119,7 +124,23 @@ public class Workspace extends JFrame {
             systemClipboard.setContents(selection, null);
 
         });
+        textSave.addActionListener(e -> {
+            JFileChooser jFileChooser = new JFileChooser();
+            jFileChooser.setFileFilter(new FileNameExtensionFilter("Arquivos de texto", "txt"));
 
+            if(jFileChooser.showSaveDialog(this)!=JFileChooser.APPROVE_OPTION){return;}
+            jFileChooser.setSelectedFile(new File(jFileChooser.getSelectedFile().getAbsolutePath() + ".txt"));
+            File file = jFileChooser.getSelectedFile();
+            try {
+                BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+                writer.write(renderedImage);
+                writer.close();
+                lastAction.setText("Arquivo salvo com sucesso :)");
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Algo de errado aconteceu, fica o Stacktrace:\n" + ex);
+                ex.printStackTrace();
+            }
+        });
         abrir.add(arquivo);
         abrir.add(CtrlV);
 
