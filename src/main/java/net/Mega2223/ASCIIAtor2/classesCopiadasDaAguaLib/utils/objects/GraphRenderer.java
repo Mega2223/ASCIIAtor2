@@ -154,7 +154,7 @@ public class GraphRenderer {
     }
 
 
-    public static BufferedImage renderWithGrid(List<List<double[]>> dobros, List<List<double[]>> linhasNEssenciais, Dimension dim, Color[] colors, double frequency[]) {
+    public static BufferedImage renderWithGrid(List<List<double[]>> dobros, List<List<double[]>> linhasNEssenciais, Dimension dim, Color[] colors, double[] frequency) {
 
         List<double[]> first = dobros.get(0);
         if (first.size() == 0){
@@ -271,7 +271,7 @@ public class GraphRenderer {
     public BufferedImage renderWithGrid(List<List<double[]>> extraLanes,double gridIndex){
         return renderWithGrid(this.values,extraLanes,this.dimension,this.colours,new double[]{gridIndex,gridIndex});
     }
-    public BufferedImage renderWithGrid(List<List<double[]>> extraLanes,double gridIndex[]){
+    public BufferedImage renderWithGrid(List<List<double[]>> extraLanes, double[] gridIndex){
         return renderWithGrid(this.values,extraLanes,this.dimension,this.colours,gridIndex);
     }
 
