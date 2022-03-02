@@ -12,19 +12,6 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
     </properties>
-    <repositories>
-
-    </repositories>
-
-    <dependencies>
-        <dependency>
-            <groupId>net.Mega2223</groupId>
-            <artifactId>aguaLib</artifactId>
-            <version>1.0.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/src/main/resources/aguaLib.jar</systemPath>
-        </dependency>
-    </dependencies>
 
     <build>
 

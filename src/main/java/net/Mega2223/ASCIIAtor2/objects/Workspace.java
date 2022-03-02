@@ -1,7 +1,6 @@
 package net.Mega2223.ASCIIAtor2.objects;
 
-import net.Mega2223.utils.GenericTools;
-import net.Mega2223.utils.ImageTools;
+import net.Mega2223.ASCIIAtor2.classesCopiadasDaAguaLib.utils.GenericTools;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageTranscoder;
@@ -16,6 +15,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URL;
 import java.util.List;
 
 public class Workspace extends JFrame {
@@ -50,8 +50,8 @@ public class Workspace extends JFrame {
         setLayout(new FlowLayout());
         setSize(300, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        setIconImage(ImageTools.getImageByURL("https://avatars.githubusercontent.com/u/59067466?s=400&u=9d154cbed85befb100018e3c9e4708875b51b141&v=4"));
+        System.setProperty("http.agent", "Chrome");
+        setIconImage(ImageIO.read(new URL("https://avatars.githubusercontent.com/u/59067466?s=400&u=9d154cbed85befb100018e3c9e4708875b51b141&v=4")));
 
         add(lastAction);
         lastAction.setFont(Font.decode("Consolas"));
